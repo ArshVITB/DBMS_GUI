@@ -125,7 +125,7 @@ public class DBMSGuiApp extends JFrame {
         });
         filterButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                applyFilter();
+                filterResults();
             }
         });
         queryArea.addKeyListener(new KeyAdapter() {
@@ -134,7 +134,7 @@ public class DBMSGuiApp extends JFrame {
                     e.consume();
                     executeQuery();
                     if (!filterField.getText().trim().isEmpty()) {
-                        applyFilter();
+                        filterResults();
                     }
                 }
             }
@@ -146,7 +146,7 @@ public class DBMSGuiApp extends JFrame {
                     if (filterField.getText().trim().isEmpty()) {
                         executeQuery();
                     } else {
-                        applyFilter();
+                        filterResults();
                     }
                 }
             }
@@ -208,44 +208,26 @@ public class DBMSGuiApp extends JFrame {
         }
     }
 
-    private void applyFilter() {
+    private void filterResults() {
         String filterText = filterField.getText().trim().toLowerCase();
         if (filterText.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter a filter term", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        DefaultTableModel originalModel = new DefaultTableModel();
-        for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            originalModel.addColumn(tableModel.getColumnName(i));
-        }
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            originalModel.addRow(tableModel.getDataVector().elementAt(i).toArray());
-        }
-
-        tableModel.setRowCount(0);
-        for (int row = 0; row < originalModel.getRowCount(); row++) {
+        for (int row = tableModel.getRowCount() - 1; row >= 0; row--) {
             boolean matches = false;
-            for (int col = 0; col < originalModel.getColumnCount(); col++) {
-                Object value = originalModel.getValueAt(row, col);
+            for (int col = 0; col < tableModel.getColumnCount(); col++) {
+                Object value = tableModel.getValueAt(row, col);
                 if (value != null && value.toString().toLowerCase().contains(filterText)) {
                     matches = true;
                     break;
                 }
             }
-            if (matches) {
-                tableModel.addRow(originalModel.getDataVector().elementAt(row).toArray());
+            if (!matches) {
+                tableModel.removeRow(row);
             }
         }
-        autoResizeAllColumns();
-    }
-
-    private void clearFilter() {
-        String query = queryArea.getText().trim();
-        if (!query.isEmpty()) {
-            executeQuery();
-        }
-        filterField.setText("");
     }
 
     private void autoResizeColumn(int columnIndex) {
